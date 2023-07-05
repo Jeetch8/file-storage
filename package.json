@@ -1,0 +1,20 @@
+{
+  "name": "file_storage",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Jeet Chawda <jchawda332@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "frontend",
+      "server"
+    ]
+  },
+  "scripts": {
+    "dev": "concurrently \"yarn workspace frontend dev\" \"yarn workspace server dev\""
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
