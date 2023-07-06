@@ -3,7 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch";
 import { base_url } from "../utils/base_url";
 import ViewFolderContent from "../components/ViewFolderContent";
-import { AiOutlineFolderAdd, AiOutlineFileAdd } from "react-icons/ai";
+import { AiOutlineFileAdd } from "react-icons/ai";
+import CreateFolderModal from "../components/CreateFolderModal";
+import Breadcrumb from "../components/BreadCrumbs";
+import toast from "react-hot-toast";
 
 const Folder = () => {
   const { folderId } = useParams();
@@ -19,6 +22,26 @@ const Folder = () => {
       if (err.message.startsWith("No item found with id")) navigate("/");
     },
   });
+  const { doFetch: uploadFileFetch, fetchState: uploadFileState } = useFetch({
+    url: base_url + "/file/upload-file",
+    authorized: true,
+    method: "POST",
+    onSuccess: (data) => {
+      toast.success("File uploaded successfully");
+      doFetch();
+    },
+    onError: (err) => {
+      console.log(err);
+    },
+  });
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("parentFolderId", folderId);
+    uploadFileFetch(formData);
+  };
 
   useEffect(() => {
     doFetch();
@@ -26,15 +49,22 @@ const Folder = () => {
 
   return (
     <div>
+      <Breadcrumb path={dataRef.current?.folder?.path} />
       <div className="flex items-center gap-x-3 my-4 mx-4 justify-end">
-        <button className="border-2 border-stone-500 rounded-md px-3 py-1 flex items-center gap-x-1 hover:bg-slate-100">
-          <AiOutlineFolderAdd size={26} />
-          <span>Add Folder</span>
-        </button>
-        <button className="border-2 border-stone-500 rounded-md px-3 py-1 flex items-center gap-x-1 hover:bg-slate-100">
+        <CreateFolderModal parentFolderId={folderId} doFetch={doFetch} />
+        <label
+          htmlFor="uploadNewFile"
+          className="border-2 border-stone-500 rounded-md px-3 py-1 flex items-center gap-x-1 hover:bg-slate-100 cursor-pointer"
+        >
           <AiOutlineFileAdd size={22} />
-          <span>Add Folder</span>
-        </button>
+          <span>Upload File</span>
+        </label>
+        <input
+          type="file"
+          id="uploadNewFile"
+          className="hidden"
+          onChange={handleFileUpload}
+        />
       </div>
       <ViewFolderContent folderInfo={dataRef.current?.folder} />
     </div>

@@ -17,31 +17,33 @@ const getFolderContent = async (req, res) => {
 };
 
 const createFolder = async (req, res) => {
-  const { name, parentId } = req.body;
+  const { folderName, parentFolderId } = req.body;
   const userId = req.user.userId;
-  if (!name) {
+  if (!folderName) {
     throw new BadRequestError("Name is required");
   }
-  if (!parentId) {
+  if (!parentFolderId) {
     throw new BadRequestError("Parent folder is required");
   }
-  const parentFolder = await FolderModel.findById(parentId).populate("folders");
+  const parentFolder = await FolderModel.findById(parentFolderId).populate(
+    "folders"
+  );
   if (!parentFolder) {
     throw new BadRequestError("Parent folder does not exist");
   }
   parentFolder.folders.forEach((folder) => {
-    if (folder.name === name) {
+    if (folder.name === folderName) {
       throw new BadRequestError("Folder with this name already exist");
     }
   });
-  const path = `${parentFolder.path}/${name}`;
+  const path = `${parentFolder.path}/${folderName}`;
   const folder = await FolderModel.create({
-    name,
-    parentId,
+    name: folderName,
+    parentId: parentFolderId,
     path,
     owner_id: userId,
   });
-  await FolderModel.findByIdAndUpdate(parentId, {
+  await FolderModel.findByIdAndUpdate(parentFolderId, {
     $push: { folders: folder._id },
   });
   res.status(201).json({ folder });
@@ -50,10 +52,12 @@ const createFolder = async (req, res) => {
 const uploadFile = async (req, res) => {
   const file = req?.files?.file;
   const userId = req.user.userId;
-  const { parentId } = req.body;
-  await FileModel.deleteMany({});
+  const { parentFolderId } = req.body;
   const user = await UserModel.findById(userId);
-  const fileExist = await FileModel.findOne({ name: file.name, parentId });
+  const fileExist = await FileModel.findOne({
+    name: file.name,
+    parentId: parentFolderId,
+  });
   if (fileExist) {
     throw new BadRequestError("File with this name already exist");
   }
@@ -63,20 +67,20 @@ const uploadFile = async (req, res) => {
     Key: file.name,
     Body: filestream,
   });
-  const response = await s3Client.send(command);
+  await s3Client.send(command);
   await fs.promises.unlink(file.tempFilePath);
   const newFile = await FileModel.create({
     name: file.name,
     size: file.size,
     mimeType: file.mimetype,
-    parentId: parentId,
+    parentId: parentFolderId,
     owner_id: userId,
     s3Key: file.name,
   });
   await UserModel.findByIdAndUpdate(userId, {
     $inc: { usedSpace: file.size },
   });
-  await FolderModel.findByIdAndUpdate(parentId, {
+  await FolderModel.findByIdAndUpdate(parentFolderId, {
     $push: { files: newFile._id },
   });
   res.status(201).json({ file: newFile });

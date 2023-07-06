@@ -6,7 +6,7 @@ const ViewFolderContent = ({ folderInfo }) => {
   const navigate = useNavigate();
 
   const handleFolderClick = (folderId) => {
-    navigate("/" + folderId);
+    navigate("/folder/" + folderId);
   };
 
   const handleFileClick = (e) => {};
@@ -20,7 +20,10 @@ const ViewFolderContent = ({ folderInfo }) => {
   }
 
   return (
-    <div>
+    <div className="ml-4">
+      {folderInfo?.files?.length > 0 && (
+        <h3 className="font-semibold text-xl">Files</h3>
+      )}
       {folderInfo?.files.map((el) => {
         return (
           <button
@@ -33,6 +36,9 @@ const ViewFolderContent = ({ folderInfo }) => {
           </button>
         );
       })}
+      {folderInfo?.folders?.length > 0 && (
+        <h3 className="font-semibold text-xl">Folders</h3>
+      )}
       {folderInfo?.folders.map((el) => {
         return (
           <button
