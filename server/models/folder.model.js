@@ -8,7 +8,13 @@ const folderSchema = new mongoose.Schema(
       ref: "Folder",
       default: null,
     },
-    path: { type: String, required: true, default: null },
+    path: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Folder",
+        required: true,
+      },
+    ],
     owner_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

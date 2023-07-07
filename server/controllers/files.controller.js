@@ -6,19 +6,32 @@ const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { s3, s3Client } = require("../utils/s3Client");
 const UserModel = require("../models/user.model");
-const { BadRequestError } = require("../errors");
+const { BadRequestError, NotFoundError } = require("../errors");
 
 const getFolderContent = async (req, res) => {
   const folderId = req.params.id;
   const folder = await FolderModel.findById(folderId)
     .populate("folders")
-    .populate("files");
+    .populate("files")
+    .populate("path");
+  if (!folder) throw new NotFoundError("Folder not found");
+  if (folder.name === "root" && folder.parentId === null) {
+    folder._doc.path = [{ name: "Home", _id: folderId }];
+  } else {
+    const temp = folder.path;
+    temp[0].name = "Home";
+    temp.push({ name: folder.name, _id: folderId });
+    folder._doc.path = temp;
+  }
   res.status(200).json({ folder });
 };
 
 const createFolder = async (req, res) => {
   const { folderName, parentFolderId } = req.body;
   const userId = req.user.userId;
+  // await FolderModel.deleteMany({});
+  // await FileModel.deleteMany({});
+  // await UserModel.deleteMany({});
   if (!folderName) {
     throw new BadRequestError("Name is required");
   }
@@ -36,11 +49,11 @@ const createFolder = async (req, res) => {
       throw new BadRequestError("Folder with this name already exist");
     }
   });
-  const path = `${parentFolder.path}/${folderName}`;
+  const currentPath = [...parentFolder.path, parentFolderId];
   const folder = await FolderModel.create({
     name: folderName,
+    path: currentPath,
     parentId: parentFolderId,
-    path,
     owner_id: userId,
   });
   await FolderModel.findByIdAndUpdate(parentFolderId, {

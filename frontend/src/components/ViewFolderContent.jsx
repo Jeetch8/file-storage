@@ -13,7 +13,7 @@ const ViewFolderContent = ({ folderInfo }) => {
 
   if (folderInfo?.folders?.length === 0 && folderInfo?.files?.length === 0) {
     return (
-      <div>
+      <div className="ml-4">
         <h2 className="font-semibold">No Files in this folder</h2>
       </div>
     );

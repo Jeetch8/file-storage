@@ -16,7 +16,8 @@ const Folder = () => {
     authorized: true,
     method: "GET",
     onSuccess: (data) => {
-      console.log(data);
+      const last = data.folder.path.length - 1;
+      data.folder.path[last].currentFolder = true;
     },
     onError: (err) => {
       if (err.message.startsWith("No item found with id")) navigate("/");
@@ -49,7 +50,9 @@ const Folder = () => {
 
   return (
     <div>
-      <Breadcrumb path={dataRef.current?.folder?.path} />
+      {dataRef.current?.folder?.path.length > 0 && (
+        <Breadcrumb path={dataRef.current?.folder?.path} />
+      )}
       <div className="flex items-center gap-x-3 my-4 mx-4 justify-end">
         <CreateFolderModal parentFolderId={folderId} doFetch={doFetch} />
         <label

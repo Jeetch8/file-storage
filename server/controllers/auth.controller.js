@@ -10,9 +10,9 @@ const FileModel = require("../models/file.model");
 
 const register = async (req, res) => {
   const { email, name, password, profile_img } = req.body;
-  // await FileModel.deleteMany({});
-  // await FolderModel.deleteMany({});
-  // await User.deleteMany({});
+  await FileModel.deleteMany({});
+  await FolderModel.deleteMany({});
+  await User.deleteMany({});
   const emailAlreadyExists = await User.findOne({ email });
   if (emailAlreadyExists) {
     throw new CustomError.BadRequestError("Email already exists");
@@ -35,7 +35,7 @@ const register = async (req, res) => {
   });
   const rootfolder = await FolderModel.create({
     name: "root",
-    path: "/",
+    path: [],
     owner_id: user._id,
     parentId: null,
   });
