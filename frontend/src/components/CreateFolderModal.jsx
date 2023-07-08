@@ -11,7 +11,7 @@ const CreateFolderModal = ({ parentFolderId, doFetch }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { doFetch: createFolderFetch, fetchState: createFolderState } =
     useFetch({
-      url: base_url + "/file/create-folder",
+      url: base_url + "/folder/create-folder",
       authorized: true,
       method: "POST",
       onSuccess: (data) => {

@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 
 const BreadCrumbs = ({ path }) => {
   const navigate = useNavigate();
-  console.log(path);
 
   return (
     <div className="flex items-center gap-x-2 mt-2 ml-4">

@@ -1,66 +1,14 @@
 const FolderModel = require("../models/folder.model");
 const FileModel = require("../models/file.model");
 const fs = require("fs");
-const { PutObjectCommand } = require("@aws-sdk/client-s3");
-const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { s3, s3Client } = require("../utils/s3Client");
 const UserModel = require("../models/user.model");
 const { BadRequestError, NotFoundError } = require("../errors");
-
-const getFolderContent = async (req, res) => {
-  const folderId = req.params.id;
-  const folder = await FolderModel.findById(folderId)
-    .populate("folders")
-    .populate("files")
-    .populate("path");
-  if (!folder) throw new NotFoundError("Folder not found");
-  if (folder.name === "root" && folder.parentId === null) {
-    folder._doc.path = [{ name: "Home", _id: folderId }];
-  } else {
-    const temp = folder.path;
-    temp[0].name = "Home";
-    temp.push({ name: folder.name, _id: folderId });
-    folder._doc.path = temp;
-  }
-  res.status(200).json({ folder });
-};
-
-const createFolder = async (req, res) => {
-  const { folderName, parentFolderId } = req.body;
-  const userId = req.user.userId;
-  // await FolderModel.deleteMany({});
-  // await FileModel.deleteMany({});
-  // await UserModel.deleteMany({});
-  if (!folderName) {
-    throw new BadRequestError("Name is required");
-  }
-  if (!parentFolderId) {
-    throw new BadRequestError("Parent folder is required");
-  }
-  const parentFolder = await FolderModel.findById(parentFolderId).populate(
-    "folders"
-  );
-  if (!parentFolder) {
-    throw new BadRequestError("Parent folder does not exist");
-  }
-  parentFolder.folders.forEach((folder) => {
-    if (folder.name === folderName) {
-      throw new BadRequestError("Folder with this name already exist");
-    }
-  });
-  const currentPath = [...parentFolder.path, parentFolderId];
-  const folder = await FolderModel.create({
-    name: folderName,
-    path: currentPath,
-    parentId: parentFolderId,
-    owner_id: userId,
-  });
-  await FolderModel.findByIdAndUpdate(parentFolderId, {
-    $push: { folders: folder._id },
-  });
-  res.status(201).json({ folder });
-};
+const {
+  generateVideoThumbnail,
+  generateLowResImageThumbnail,
+} = require("../utils/file-processing");
 
 const uploadFile = async (req, res) => {
   const file = req?.files?.file;
@@ -72,7 +20,7 @@ const uploadFile = async (req, res) => {
     parentId: parentFolderId,
   });
   if (fileExist) {
-    throw new BadRequestError("File with this name already exist");
+    throw new BadRequestError("File already exist");
   }
   const filestream = fs.createReadStream(file.tempFilePath);
   const command = new PutObjectCommand({
@@ -90,6 +38,13 @@ const uploadFile = async (req, res) => {
     owner_id: userId,
     s3Key: file.name,
   });
+  // const fileMimeType = file.mimetype.split("/")[0];
+  // if (fileMimeType === "video") {
+  //   generateVideoThumbnail(file, newFile._id, user.s3_bucket_id);
+  // }
+  // if (fileMimeType === "image") {
+  //   generateLowResImageThumbnail(file, newFile._id, user.s3_bucket_id);
+  // }
   await UserModel.findByIdAndUpdate(userId, {
     $inc: { usedSpace: file.size },
   });
@@ -99,8 +54,27 @@ const uploadFile = async (req, res) => {
   res.status(201).json({ file: newFile });
 };
 
+const deleteFile = async (req, res) => {
+  const { fileId } = req.body;
+  const userId = req.user.userId;
+  if (!fileId) throw new BadRequestError("File id is required");
+  const file = await FileModel.findByIdAndDelete(fileId);
+  if (!file) throw new NotFoundError("File not found");
+  const parentFolder = await FolderModel.findByIdAndUpdate(file.parentId, {
+    $pull: { files: fileId },
+  });
+  const user = await UserModel.findByIdAndUpdate(userId, {
+    $inc: { usedSpace: -file.size },
+  });
+  const command = new DeleteObjectCommand({
+    Bucket: user.s3_bucket_id,
+    Key: file.name,
+  });
+  await s3Client.send(command);
+  res.status(200).json({ message: "File deleted successfully" });
+};
+
 module.exports = {
-  getFolderContent,
-  createFolder,
   uploadFile,
+  deleteFile,
 };

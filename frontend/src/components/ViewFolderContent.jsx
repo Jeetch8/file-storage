@@ -1,15 +1,67 @@
-import React from "react";
-import { CiFileOn, CiFolderOn } from "react-icons/ci";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FileIcon, defaultStyles } from "react-file-icon";
+import MoreOptions from "./MoreOptions";
+import { FaFolder } from "react-icons/fa";
+import { useFetch } from "../hooks/useFetch";
+import { base_url } from "../utils/base_url";
+import toast from "react-hot-toast";
 
-const ViewFolderContent = ({ folderInfo }) => {
+const ViewFolderContent = ({ folderInfo, doFetch }) => {
   const navigate = useNavigate();
+  const { doFetch: deleteFolderFetch, fetchState: deleteFolderState } =
+    useFetch({
+      url: base_url + "/folder/",
+      authorized: true,
+      method: "DELETE",
+      onSuccess: (data) => {
+        toast.dismiss("deleting");
+        toast.success("Folder deleted");
+        doFetch();
+      },
+      onError: (err) => {
+        toast.dismiss("deleting");
+        toast.error(err.message, { duration: 4000 });
+      },
+    });
+  const { doFetch: deleteFileFetch, fetchState: deleteFileState } = useFetch({
+    url: base_url + "/file/delete-file/",
+    authorized: true,
+    method: "DELETE",
+    onSuccess: (data) => {
+      toast.dismiss("deleting");
+      toast.success("File deleted");
+      doFetch();
+    },
+    onError: (err) => {
+      toast.dismiss("deleting");
+      toast.error(err.message, { duration: 4000 });
+    },
+  });
 
   const handleFolderClick = (folderId) => {
     navigate("/folder/" + folderId);
   };
 
   const handleFileClick = (e) => {};
+
+  const handleFileMoreOptionsClick = (option, fileId) => {
+    if (option === "Delete") {
+      toast.loading(`Deleting file`, {
+        id: "deleting",
+      });
+      deleteFileFetch({ fileId });
+    }
+  };
+
+  const handleFolderMoreOptionsClick = (option, folderId) => {
+    if (option === "Delete") {
+      toast.loading(`Deleting folder`, {
+        id: "deleting",
+      });
+      deleteFolderFetch({ folderId });
+    }
+  };
 
   if (folderInfo?.folders?.length === 0 && folderInfo?.files?.length === 0) {
     return (
@@ -24,33 +76,68 @@ const ViewFolderContent = ({ folderInfo }) => {
       {folderInfo?.files?.length > 0 && (
         <h3 className="font-semibold text-xl">Files</h3>
       )}
-      {folderInfo?.files.map((el) => {
-        return (
-          <button
-            onClick={handleFileClick}
-            key={el._id}
-            className="border-2 px-4 py-2 w-fit flex items-center gap-x-2 rounded-md hover:bg-stone-100 my-3"
-          >
-            <CiFileOn size={"18px"} />
-            <span>{el.name}</span>
-          </button>
-        );
-      })}
+      <div className="flex flex-wrap gap-5">
+        {folderInfo?.files.map((el) => {
+          const ext = el.name.split(".").pop();
+          return (
+            <div
+              onClick={handleFileClick}
+              key={el._id}
+              className="border-2 px-4 pt-2 pb-4 w-[260px] gap-x-2 rounded-md hover:bg-slate-200 my-3 bg-slate-400 cursor-pointer"
+            >
+              <div className="flex justify-between">
+                <p className="py-1 text-left">{el.name.substring(0, 23)}...</p>
+                <MoreOptions
+                  entityId={el._id}
+                  onClick={handleFileMoreOptionsClick}
+                  options={["Rename", "Delete", "Download", "Share"]}
+                />
+              </div>
+              {el?.signedUrl ? (
+                <div
+                  style={{
+                    background: `url(${el.signedUrl})`,
+                    height: "200px",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                  }}
+                ></div>
+              ) : (
+                <div className="bg-white rounded-md h-[200px] flex items-center justify-center">
+                  <span className="w-[60px] flex items-center justify-center">
+                    <FileIcon extension={ext} {...defaultStyles[ext]} />
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
       {folderInfo?.folders?.length > 0 && (
         <h3 className="font-semibold text-xl">Folders</h3>
       )}
-      {folderInfo?.folders.map((el) => {
-        return (
-          <button
-            onClick={() => handleFolderClick(el._id)}
-            key={el._id}
-            className="border-2 px-4 py-2 w-fit flex items-center gap-x-2 rounded-md hover:bg-stone-100 my-3"
-          >
-            <CiFolderOn size={"18px"} />
-            <span>{el.name}</span>
-          </button>
-        );
-      })}
+      <div className="flex items-center gap-x-4 flex-wrap pr-4">
+        {folderInfo?.folders.map((el) => {
+          return (
+            <div
+              onDoubleClick={() => handleFolderClick(el._id)}
+              key={el._id}
+              className="border-2 pl-4 pr-3 py-2 flex items-center justify-between rounded-md hover:bg-stone-100 my-3 w-[250px] select-none relative"
+            >
+              <span className="flex items-center gap-x-2">
+                <FaFolder size={"18px"} />
+                <span>{el.name}</span>
+              </span>
+              <MoreOptions
+                entityId={el._id}
+                onClick={handleFolderMoreOptionsClick}
+                options={["Rename", "Delete", "Download", "Share"]}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFetch } from "../hooks/useFetch";
 import { base_url } from "../utils/base_url";
@@ -7,12 +7,13 @@ import { AiOutlineFileAdd } from "react-icons/ai";
 import CreateFolderModal from "../components/CreateFolderModal";
 import Breadcrumb from "../components/BreadCrumbs";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 const Folder = () => {
   const { folderId } = useParams();
   const navigate = useNavigate();
   const { doFetch, dataRef } = useFetch({
-    url: base_url + "/file/" + folderId,
+    url: base_url + "/folder/" + folderId,
     authorized: true,
     method: "GET",
     onSuccess: (data) => {
@@ -23,25 +24,36 @@ const Folder = () => {
       if (err.message.startsWith("No item found with id")) navigate("/");
     },
   });
-  const { doFetch: uploadFileFetch, fetchState: uploadFileState } = useFetch({
-    url: base_url + "/file/upload-file",
-    authorized: true,
-    method: "POST",
-    onSuccess: (data) => {
-      toast.success("File uploaded successfully");
-      doFetch();
-    },
-    onError: (err) => {
-      console.log(err);
-    },
-  });
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     const formData = new FormData();
     formData.append("file", file);
     formData.append("parentFolderId", folderId);
-    uploadFileFetch(formData);
+    await axios
+      .post(base_url + "/file/upload-file", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        onUploadProgress: (progressEvent) => {
+          const uploadPercent = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          toast.loading(`Uploading file... ${uploadPercent}%`, {
+            id: "uploading",
+          });
+        },
+      })
+      .then((res) => {
+        toast.dismiss("uploading");
+        toast.success("File uploaded successfully");
+        doFetch();
+      })
+      .catch((err) => {
+        toast.dismiss("uploading");
+        toast.error(err.response.data.message);
+      });
   };
 
   useEffect(() => {
@@ -69,7 +81,10 @@ const Folder = () => {
           onChange={handleFileUpload}
         />
       </div>
-      <ViewFolderContent folderInfo={dataRef.current?.folder} />
+      <ViewFolderContent
+        doFetch={doFetch}
+        folderInfo={dataRef.current?.folder}
+      />
     </div>
   );
 };

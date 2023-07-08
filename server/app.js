@@ -23,6 +23,7 @@ app.use(express.json());
 app.use("/api/v1/user", require("./routes/user.routes"));
 app.use("/api/v1/auth", require("./routes/auth.routes"));
 app.use("/api/v1/file", require("./routes/file.routes"));
+app.use("/api/v1/folder", require("./routes/folder.routes"));
 
 app.use(require("./middleware/not-found"));
 app.use(require("./middleware/error-handler"));
