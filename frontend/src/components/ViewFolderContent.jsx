@@ -45,21 +45,23 @@ const ViewFolderContent = ({ folderInfo, doFetch }) => {
 
   const handleFileClick = (e) => {};
 
-  const handleFileMoreOptionsClick = (option, fileId) => {
+  const handleFileMoreOptionsClick = (option, file) => {
     if (option === "Delete") {
       toast.loading(`Deleting file`, {
         id: "deleting",
       });
-      deleteFileFetch({ fileId });
+      deleteFileFetch({ file: file._id });
+    } else if (option === "Download") {
+      window.open(file.signedUrl, "_blank");
     }
   };
 
-  const handleFolderMoreOptionsClick = (option, folderId) => {
+  const handleFolderMoreOptionsClick = (option, folder) => {
     if (option === "Delete") {
       toast.loading(`Deleting folder`, {
         id: "deleting",
       });
-      deleteFolderFetch({ folderId });
+      deleteFolderFetch({ folder: folder._id });
     }
   };
 
@@ -88,7 +90,7 @@ const ViewFolderContent = ({ folderInfo, doFetch }) => {
               <div className="flex justify-between">
                 <p className="py-1 text-left">{el.name.substring(0, 23)}...</p>
                 <MoreOptions
-                  entityId={el._id}
+                  entity={el}
                   onClick={handleFileMoreOptionsClick}
                   options={["Rename", "Delete", "Download", "Share"]}
                 />
@@ -130,9 +132,9 @@ const ViewFolderContent = ({ folderInfo, doFetch }) => {
                 <span>{el.name}</span>
               </span>
               <MoreOptions
-                entityId={el._id}
+                entity={el._id}
                 onClick={handleFolderMoreOptionsClick}
-                options={["Rename", "Delete", "Download", "Share"]}
+                options={["Rename", "Delete"]}
               />
             </div>
           );

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoMdMore } from "react-icons/io";
 
-const MoreOptions = ({ options, onClick, entityId }) => {
+const MoreOptions = ({ options, onClick, entity }) => {
   const [showOptions, setShowOptions] = useState(false);
   const optionsRef = useRef(null);
 
@@ -32,7 +32,7 @@ const MoreOptions = ({ options, onClick, entityId }) => {
               <li
                 key={index}
                 className="break-keep-all px-2 py-1 hover:bg-slate-100 cursor-pointer"
-                onClick={() => onClick(option, entityId)}
+                onClick={() => onClick(option, entity)}
               >
                 {option}
               </li>

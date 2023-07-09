@@ -26,15 +26,13 @@ const getFolderContent = async (req, res) => {
     folder._doc.path = temp;
   }
   for (let file of folder.files) {
-    if (file.mimeType.startsWith("image/")) {
-      const command = new GetObjectCommand({
-        Bucket: user.s3_bucket_id,
-        Key: file.name,
-      });
-      file._doc.signedUrl = await getSignedUrl(s3Client, command, {
-        expiresIn: 3600,
-      });
-    }
+    const command = new GetObjectCommand({
+      Bucket: user.s3_bucket_id,
+      Key: file.name,
+    });
+    file._doc.signedUrl = await getSignedUrl(s3Client, command, {
+      expiresIn: 3600,
+    });
   }
   res.status(200).json({ folder });
 };
