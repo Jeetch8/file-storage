@@ -117,4 +117,18 @@ const createFolder = async (req, res) => {
   res.status(201).json({ folder });
 };
 
-module.exports = { deleteFolder, getFolderContent, createFolder };
+const renameFolder = async (req, res) => {
+  const { newFolderName } = req.body;
+  const { folderId } = req.params;
+  const folder = await FolderModel.findByIdAndUpdate(
+    folderId,
+    { name: newFolderName },
+    { new: true }
+  );
+  if (!folder) {
+    throw new NotFoundError("Folder not found");
+  }
+  res.status(200).json({ folder });
+};
+
+module.exports = { deleteFolder, getFolderContent, createFolder, renameFolder };

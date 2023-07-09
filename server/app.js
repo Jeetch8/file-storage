@@ -28,17 +28,14 @@ app.use("/api/v1/folder", require("./routes/folder.routes"));
 app.use(require("./middleware/not-found"));
 app.use(require("./middleware/error-handler"));
 
-const serverInit = async () => {
+const server = app.listen(port, async () => {
   try {
     await mongoose.connect(process.env.DB_URL).then(() => {
       console.log("DB Connection established");
     });
-    app.listen(port, () => {
-      console.log("server listening on " + port);
-    });
   } catch (error) {
     console.log(error, "Server intialization failed");
   }
-};
+});
 
-serverInit();
+module.exports = server;

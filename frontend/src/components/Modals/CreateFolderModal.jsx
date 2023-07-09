@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import Modal from "./global/Modal";
+import Modal from "./Modal";
 import { AiOutlineFolderAdd } from "react-icons/ai";
-import { base_url } from "../utils/base_url";
-import { useFetch } from "../hooks/useFetch";
+import { base_url } from "../../utils/base_url";
+import { useFetch } from "../../hooks/useFetch";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import toast from "react-hot-toast";
 

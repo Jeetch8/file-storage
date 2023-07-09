@@ -6,9 +6,12 @@ import { FaFolder } from "react-icons/fa";
 import { useFetch } from "../hooks/useFetch";
 import { base_url } from "../utils/base_url";
 import toast from "react-hot-toast";
+import RenameFileModal from "./Modals/RenameFileModal";
+import RenameFolderModal from "./Modals/RenameFolderModal";
 
 const ViewFolderContent = ({ folderInfo, doFetch }) => {
   const navigate = useNavigate();
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const { doFetch: deleteFolderFetch, fetchState: deleteFolderState } =
     useFetch({
       url: base_url + "/folder/",
@@ -53,6 +56,8 @@ const ViewFolderContent = ({ folderInfo, doFetch }) => {
       deleteFileFetch({ file: file._id });
     } else if (option === "Download") {
       window.open(file.signedUrl, "_blank");
+    } else if (option === "Rename") {
+      setIsRenameModalOpen(true);
     }
   };
 
@@ -62,6 +67,8 @@ const ViewFolderContent = ({ folderInfo, doFetch }) => {
         id: "deleting",
       });
       deleteFolderFetch({ folder: folder._id });
+    } else if (option === "Rename") {
+      setIsRenameModalOpen(true);
     }
   };
 
@@ -74,7 +81,7 @@ const ViewFolderContent = ({ folderInfo, doFetch }) => {
   }
 
   return (
-    <div className="ml-4">
+    <div className="ml-4 w-full">
       {folderInfo?.files?.length > 0 && (
         <h3 className="font-semibold text-xl">Files</h3>
       )}
@@ -132,7 +139,7 @@ const ViewFolderContent = ({ folderInfo, doFetch }) => {
                 <span>{el.name}</span>
               </span>
               <MoreOptions
-                entity={el._id}
+                entity={el}
                 onClick={handleFolderMoreOptionsClick}
                 options={["Rename", "Delete"]}
               />
@@ -140,6 +147,8 @@ const ViewFolderContent = ({ folderInfo, doFetch }) => {
           );
         })}
       </div>
+      <RenameFileModal />
+      <RenameFolderModal />
     </div>
   );
 };

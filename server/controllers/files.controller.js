@@ -74,7 +74,28 @@ const deleteFile = async (req, res) => {
   res.status(200).json({ message: "File deleted successfully" });
 };
 
+const renameFile = async (req, res) => {
+  const userId = req.user.userId;
+  const { newFileName } = req.body;
+  const { fileId } = req.params;
+  const file = await FileModel.findByIdAndUpdate(fileId, { name: newFileName });
+  if (!file) throw new BadRequestError("FileId not valid");
+  const user = await UserModel.findById(userId);
+  await s3
+    .copyObject({
+      Bucket: user.s3_bucket_id,
+      Key: newFileName,
+      CopySource: `${user.s3_bucket_id}/${file.name}`,
+    })
+    .promise();
+  await s3
+    .deleteObject({ Bucket: user.s3_bucket_id, Key: file.name })
+    .promise();
+  res.status(200).json({ message: "File renamed successfully" });
+};
+
 module.exports = {
   uploadFile,
   deleteFile,
+  renameFile,
 };

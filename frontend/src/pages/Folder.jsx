@@ -4,7 +4,7 @@ import { useFetch } from "../hooks/useFetch";
 import { base_url } from "../utils/base_url";
 import ViewFolderContent from "../components/ViewFolderContent";
 import { AiOutlineFileAdd } from "react-icons/ai";
-import CreateFolderModal from "../components/CreateFolderModal";
+import CreateFolderModal from "../components/Modals/CreateFolderModal";
 import Breadcrumb from "../components/BreadCrumbs";
 import toast from "react-hot-toast";
 import axios from "axios";
@@ -61,7 +61,7 @@ const Folder = () => {
   }, [folderId]);
 
   return (
-    <div>
+    <div className="w-full">
       {dataRef.current?.folder?.path.length > 0 && (
         <Breadcrumb path={dataRef.current?.folder?.path} />
       )}

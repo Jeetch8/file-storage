@@ -7,7 +7,7 @@ const BreadCrumbs = ({ path }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex items-center gap-x-2 mt-2 ml-4">
+    <div className="flex items-center gap-x-2 mt-2 ml-4 w-full">
       {path.map((el, ind) => {
         return (
           <div className="flex items-center gap-x-2" key={ind}>
